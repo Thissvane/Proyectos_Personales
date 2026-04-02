@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGVA — Trazabilidad</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --rose:#D4537E;--rose-l:#FBEAF0;--rose-m:#F4C0D1;--rose-d:#72243E;
+  --violet:#7F77DD;--violet-l:#EEEDFE;--violet-m:#CECBF6;--violet-d:#3C3489;
+  --teal:#1D9E75;--teal-l:#E1F5EE;--teal-m:#9FE1CB;
+  --amber:#BA7517;--amber-l:#FAEEDA;--amber-m:#FAC775;
+  --red-l:#FCEBEB;--red:#E24B4A;
+  --bg:#faf8fc;--card:#ffffff;
+  --text:#1a1519;--text2:#7a6878;--text3:#b8a8b5;
+  --border:rgba(180,100,140,0.1);--border2:rgba(180,100,140,0.2);
+  --r:14px;--r2:20px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh;}
+
+.shell{display:grid;grid-template-rows:auto auto auto 1fr;min-height:100vh;}
+
+/* ── Top bar ── */
+.topbar{
+  background:linear-gradient(135deg,#c45c8a 0%,#8b6fd4 50%,#5dc4b8 100%);
+  padding:0 28px;height:58px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand-icon{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;}
+.brand-icon svg{width:18px;height:18px;fill:white;}
+.brand-name{font-size:15px;font-weight:500;color:white;letter-spacing:0.01em;}
+.brand-sub{font-size:11px;color:rgba(255,255,255,0.7);margin-top:1px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.avatar-top{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:white;border:1.5px solid rgba(255,255,255,0.5);}
+.notif{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.notif svg{width:16px;height:16px;fill:white;}
+
+/* ── Stats row ── */
+.stats-row{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;
+  padding:20px 28px 0;
+}
+.stat{background:var(--card);border-radius:var(--r2);border:0.5px solid var(--border2);padding:18px 20px;position:relative;overflow:hidden;}
+.stat-accent{position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r2) var(--r2) 0 0;}
+.stat-label{font-size:11px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;}
+.stat-num{font-size:28px;font-weight:300;letter-spacing:-0.02em;margin-bottom:4px;}
+.stat-sub{font-size:11px;color:var(--text3);}
+.stat-ring{position:absolute;right:16px;top:50%;transform:translateY(-50%);}
+.ring-svg{width:48px;height:48px;}
+
+/* ── Mini charts row ── */
+.charts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:16px 28px 0;}
+.chart-card{background:var(--card);border-radius:var(--r2);border:0.5px solid var(--border2);padding:18px 20px;}
+.chart-label{font-size:11px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;}
+.chart-value{font-size:22px;font-weight:500;margin-bottom:12px;}
+.mini-bars{display:flex;align-items:flex-end;gap:4px;height:36px;}
+.mini-bar{flex:1;border-radius:4px 4px 0 0;transition:opacity 0.2s;}
+.mini-bar:hover{opacity:0.75;}
+.progress-wrap{margin-top:8px;}
+.progress-track{height:6px;background:var(--border);border-radius:4px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:4px;transition:width 0.6s ease;}
+.progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px;}
+
+/* ── Controls ── */
+.controls{padding:16px 28px 12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.search-wrap{position:relative;flex:1;min-width:200px;}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:14px;height:14px;opacity:0.4;}
+.search-icon svg{width:14px;height:14px;fill:var(--text);}
+input.search{width:100%;height:38px;padding:0 12px 0 34px;border:0.5px solid var(--border2);border-radius:40px;background:var(--card);color:var(--text);font-size:13px;outline:none;transition:border-color 0.15s;}
+input.search:focus{border-color:var(--rose);}
+select.sel{height:38px;padding:0 12px;border:0.5px solid var(--border2);border-radius:40px;background:var(--card);color:var(--text);font-size:13px;outline:none;cursor:pointer;}
+.pill-btn{height:34px;padding:0 16px;border-radius:40px;border:0.5px solid var(--border2);background:var(--card);color:var(--text2);font-size:12px;cursor:pointer;font-weight:500;transition:all 0.15s;white-space:nowrap;}
+.pill-btn.on{background:var(--rose);color:white;border-color:var(--rose);}
+.pill-btn:hover:not(.on){background:var(--rose-l);color:var(--rose-d);border-color:var(--rose-m);}
+
+/* ── Table ── */
+.table-outer{padding:0 28px 28px;overflow-x:auto;}
+.tcard{background:var(--card);border-radius:var(--r2);border:0.5px solid var(--border2);overflow:hidden;}
+table{width:100%;border-collapse:collapse;min-width:820px;font-size:13px;}
+thead tr{border-bottom:0.5px solid var(--border2);}
+th{padding:12px 16px;text-align:left;font-size:10px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;cursor:pointer;user-select:none;white-space:nowrap;}
+th:hover{color:var(--rose);}
+th.sorted{color:var(--rose);}
+tbody tr{border-bottom:0.5px solid var(--border);cursor:pointer;transition:background 0.12s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--rose-l);}
+td{padding:12px 16px;vertical-align:middle;}
+.ec{display:flex;align-items:center;gap:10px;}
+.av{width:32px;height:32px;min-width:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;}
+.en{font-weight:500;font-size:13px;color:var(--text);}
+.er{font-size:11px;color:var(--text2);}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;}
+.p-aplica{background:var(--teal-l);color:var(--teal);border:0.5px solid var(--teal-m);}
+.p-na{background:#f1efe8;color:#5f5e5a;border:0.5px solid #d3d1c7;}
+.dc{font-size:12px;color:var(--text2);background:#f7f4fb;padding:3px 9px;border-radius:6px;white-space:nowrap;}
+.dc.warn{background:var(--amber-l);color:var(--amber);}
+.dc.danger{background:var(--red-l);color:var(--red);}
+.ml{color:#7F77DD;font-size:12px;text-decoration:none;}
+.ml:hover{text-decoration:underline;}
+.ph{font-size:12px;color:var(--text2);}
+.empty{padding:48px;text-align:center;color:var(--text3);font-size:14px;}
+
+/* ── Pagination ── */
+.pag{display:flex;align-items:center;justify-content:space-between;padding:12px 28px 24px;flex-wrap:wrap;gap:10px;}
+.pag-info{font-size:12px;color:var(--text2);}
+.pag-btns{display:flex;gap:6px;}
+.pb{height:32px;min-width:32px;padding:0 10px;border-radius:40px;border:0.5px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;cursor:pointer;transition:all 0.13s;}
+.pb:hover:not(:disabled){background:var(--rose-l);color:var(--rose-d);border-color:var(--rose-m);}
+.pb.on{background:var(--rose);color:white;border-color:var(--rose);}
+.pb:disabled{opacity:0.35;cursor:default;}
+
+/* ── Panel ── */
+.overlay{position:fixed;inset:0;background:rgba(80,20,60,0.18);display:none;z-index:150;}
+.overlay.show{display:block;}
+.panel{position:fixed;right:0;top:0;bottom:0;width:340px;background:var(--card);border-left:0.5px solid var(--border2);padding:28px 24px;overflow-y:auto;transform:translateX(100%);transition:transform 0.26s cubic-bezier(.4,0,.2,1);z-index:200;}
+.panel.open{transform:translateX(0);}
+.pcl{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;background:var(--rose-l);border:0.5px solid var(--rose-m);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--rose-d);}
+.pcl:hover{background:var(--rose-m);}
+.pav{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:500;margin-bottom:14px;}
+.panel h2{font-size:16px;font-weight:500;margin-bottom:3px;}
+.prh{font-size:12px;color:var(--text2);margin-bottom:22px;}
+.ps-title{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);margin-bottom:8px;margin-top:18px;}
+.pr{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:13px;}
+.pr:last-child{border-bottom:none;}
+.pk{color:var(--text2);}
+.pv{font-weight:500;text-align:right;max-width:180px;word-break:break-word;}
+
+@media(max-width:600px){
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .charts-row{grid-template-columns:1fr;}
+  .controls,.stats-row,.charts-row,.table-outer,.pag{padding-left:14px;padding-right:14px;}
+  .topbar{padding:0 14px;}
+  .panel{width:100%;}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<div class="topbar">
+  <div class="brand">
+    <div>
+      <div class="brand-name">Panel SGVA</div>
+      <div class="brand-sub">Trazabilidad de empresas</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    
+    <div class="avatar-top">VG</div>
+  </div>
+</div>
+
+<div class="stats-row" id="stats-row"></div>
+
+<div class="charts-row" id="charts-row"></div>
+
+<div class="controls">
+  <div class="search-wrap">
+    <span class="search-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></span>
+    <input class="search" type="text" id="srch" placeholder="Buscar empresa, RH, correo...">
+  </div>
+  <select class="sel" id="fest">
+    <option value="">Todos los estados</option>
+    <option value="Aplica">Aplica</option>
+    <option value="NA">N/A</option>
+  </select>
+  <button class="pill-btn on" onclick="qf('all',this)">Todas</button>
+  <button class="pill-btn" onclick="qf('soon',this)">Vence pronto</button>
+  <button class="pill-btn" onclick="qf('exp',this)">Vencidas</button>
+</div>
+
+<div class="table-outer">
+  <div class="tcard">
+    <table>
+      <thead><tr>
+        <th onclick="srt('empresa')">Empresa <span id="s-empresa"></span></th>
+        <th onclick="srt('ini')">Inicio <span id="s-ini"></span></th>
+        <th onclick="srt('fin')">Fin <span id="s-fin"></span></th>
+        <th onclick="srt('estado')">Estado <span id="s-estado"></span></th>
+        <th>Correo</th>
+        <th>Teléfono</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empt" style="display:none">Sin resultados.</div>
+  </div>
+</div>
+
+<div class="pag">
+  <span class="pag-info" id="pinfo"></span>
+  <div class="pag-btns" id="pbtns"></div>
+</div>
+
+</div>
+
+<div class="overlay" id="ov" onclick="cp()"></div>
+<div class="panel" id="pan">
+  <button class="pcl" onclick="cp()">✕</button>
+  <div id="pcontent"></div>
+</div>
+
+<script>
+const D=[
+  {empresa:"VC@SOFT S A S",rh:"Michell Gonzalez",ini:"2026-03-03",fin:"2026-12-31",cierre:"2026-12-31",dir:"Cll 100 No. 17 A 36 Ofc 601",tel:"6219348",correo:"sg-sst@vc-soft.com",estado:"NA"},
+  {empresa:"INFORMATION WORKERS S.A.S",rh:"Viviana Lozano",ini:"2026-03-03",fin:"2026-04-30",cierre:"2026-04-30",dir:"Cra 13 93-35",tel:"3208587339",correo:"recursohumano@iwco.co",estado:"Aplica"},
+  {empresa:"GENSER POWER COLOMBIA",rh:"Julian Andrés Castañeda",ini:"2026-03-04",fin:"2026-08-19",cierre:"2026-08-19",dir:"Calle 100 13-21",tel:"3102522520",correo:"Julian.castaneda@genserpower.com",estado:"Aplica"},
+  {empresa:"VASS CONSULTORIA DE SISTEMAS",rh:"Carrolina Molano",ini:"2026-03-04",fin:"2026-05-31",cierre:"2026-05-31",dir:"Calle 98 N 22-64",tel:"3142356122",correo:"carolina.molano@vasscompany.com",estado:"Aplica"},
+  {empresa:"CONTINENTAL ASSIST COLOMBIA S A S",rh:"—",ini:"2026-03-05",fin:"2026-03-05",cierre:"2026-03-05",dir:"Autopista Norte 114-44",tel:"3172759174",correo:"lrojas@continentalassist.com",estado:"Aplica"},
+  {empresa:"ENFRAGEN COLOMBIA SAS",rh:"Dahyana Hernandez",ini:"2026-03-05",fin:"2026-08-07",cierre:"2026-08-07",dir:"Carrera 11 79-35",tel:"3162868845",correo:"dahyana.hernandez@enfragen.com",estado:"Aplica"},
+  {empresa:"TICSOCIAL SAS",rh:"Tiffany Galindo",ini:"2026-03-06",fin:"2026-04-30",cierre:"2026-04-30",dir:"Calle 26a 13-97",tel:"3160259088",correo:"nomina@ticsocial.com.co",estado:"Aplica"},
+  {empresa:"NTT DATA COLOMBIA S.A.S.",rh:"Isabel",ini:"2026-03-09",fin:"2026-04-30",cierre:"2026-04-30",dir:"—",tel:"—",correo:"mariaisabel.rodriguezarias@nttdata.com",estado:"NA"},
+  {empresa:"JAZZPLAT COLOMBIA S A S",rh:"Alejandro Sanchez",ini:"2026-03-10",fin:"2026-04-04",cierre:"2026-04-04",dir:"Carrera 56 9-09",tel:"3167139467",correo:"cristianalejandr.jcol@masorange.es",estado:"Aplica"},
+  {empresa:"UNIVERSIDAD ANTONIO NARIÑO",rh:"Julian David Amortegui",ini:"2026-03-10",fin:"2026-04-30",cierre:"2026-04-30",dir:"Universidad Antonio Nariño",tel:"3017875128",correo:"profesional.gestion.humana2@uan.edu.co",estado:"Aplica"},
+  {empresa:"TECPETROL COLOMBIA SAS",rh:"Maria José Vargas",ini:"2026-03-10",fin:"2026-05-31",cierre:"2026-05-31",dir:"Calle 113 7-80",tel:"3570000",correo:"tecpetrolrh-colombia@tecpetrol.com",estado:"NA"},
+  {empresa:"ADO TECHNOLOGIES COLOMBIA SAS",rh:"Jessica Montaña",ini:"2026-03-10",fin:"2026-04-10",cierre:"2026-04-10",dir:"Calle 93 16-46",tel:"3197157728",correo:"ADMINISTRACION@ADO-TECH.COM",estado:"Aplica"},
+  {empresa:"INDUSTRIA MILITAR",rh:"Johana Bonilla",ini:"2026-03-11",fin:"2026-04-10",cierre:"2026-04-10",dir:"—",tel:"207800",correo:"nini.bonilla@indumil.gov.co",estado:"Aplica"},
+  {empresa:"BENEFICIAR ENTIDAD COOPERATIVA",rh:"Bertha Rocio Sierra Lizarazo",ini:"2026-03-12",fin:"2026-04-07",cierre:"2026-04-07",dir:"Cra 7 No 34-22",tel:"7490001",correo:"analistath@beneficiar.com.co",estado:"Aplica"},
+  {empresa:"IDENTIDAD TELECOM SAS",rh:"Hernando Reyes Cortés",ini:"2026-03-12",fin:"2026-04-16",cierre:"2026-04-16",dir:"Cra 19 82-14",tel:"3173995356",correo:"hreyes@identidadtech.com",estado:"Aplica"},
+  {empresa:"SOPORTE Y LOGISTICA S.A.S",rh:"Jorge Bonilla",ini:"2026-03-13",fin:"2026-06-30",cierre:"2026-06-30",dir:"Cl 93 15-59",tel:"8540204",correo:"JORGEB@GROWER2BUYER.COM",estado:"Aplica"},
+  {empresa:"GPSI LTDA",rh:"Misdalia",ini:"2026-03-13",fin:"2026-04-30",cierre:"2026-04-30",dir:"Carrera 58b bis 128b-50",tel:"3214527570",correo:"contratacion.gpsi@gmail.com",estado:"Aplica"},
+  {empresa:"WORLD VISION INTERNATIONAL",rh:"—",ini:"2026-03-13",fin:"2026-04-22",cierre:"2026-04-22",dir:"—",tel:"—",correo:"nicolas_gambasica@wvi.org",estado:"Aplica"},
+  {empresa:"SQDM S A S",rh:"Jhoana Geraldyne Robles",ini:"2026-03-16",fin:"2026-04-10",cierre:"2026-04-10",dir:"Cl. 31 13A-51",tel:"3183733929",correo:"JhoanaRobles@sqdm.com",estado:"NA"},
+  {empresa:"INSTALEAP S.A.S.",rh:"Sonia Gonzalez",ini:"2026-03-16",fin:"2026-04-21",cierre:"2026-04-21",dir:"Calle 92 No. 15-78",tel:"3157672175",correo:"sonia.gonzalez@instaleap.io",estado:"Aplica"},
+  {empresa:"MULLEN LOWE SSP3 S.A.S",rh:"Yurani Hernandez",ini:"2026-03-16",fin:"2026-05-28",cierre:"2026-05-28",dir:"Kr 9 79A-19",tel:"3102055089",correo:"yurani.hernandez@mullenloweholding.com",estado:"NA"},
+  {empresa:"E-SOMOS ALIMENTACIÓN SAS",rh:"—",ini:"2026-03-17",fin:"2026-04-30",cierre:"2026-04-30",dir:"Kr 14 139 Sur-64",tel:"3176355129",correo:"aux_gestionhumana_esa@e-somos.co",estado:"Aplica"},
+  {empresa:"ELITE LOGISTICA Y RENDIMIENTO SAS",rh:"—",ini:"2026-03-17",fin:"2026-12-31",cierre:"2026-12-31",dir:"Av Esperanza 96-10",tel:"3156126912",correo:"—",estado:"NA"},
+  {empresa:"KUBO S.A.S",rh:"Gunther Votteler Buitrago",ini:"2026-03-18",fin:"2026-04-03",cierre:"2026-04-03",dir:"Carrera 49A No. 93-39",tel:"3208097689",correo:"mperez@kubo.co",estado:"Aplica"},
+  {empresa:"HIKVISION COLOMBIA S.A.S.",rh:"Sebastian Chaparro",ini:"2026-03-18",fin:"2026-04-20",cierre:"2026-04-20",dir:"Calle 116 No. 21-50 Piso 7",tel:"3102105864",correo:"sebastian.chaparro@hikvision.com",estado:"Aplica"},
+  {empresa:"ENERGITEL S.A.S",rh:"Magda Garcia",ini:"2026-03-18",fin:"2026-04-08",cierre:"2026-04-08",dir:"Cra 25 N 68-64",tel:"3401297",correo:"gestionhumana@energitel.com",estado:"Aplica"},
+  {empresa:"DITECH 4.0 COLOMBIA — PRACTIVOS S.A.S",rh:"Claudia",ini:"2026-03-18",fin:"2026-04-01",cierre:"2026-04-01",dir:"—",tel:"3153046717",correo:"claudia.parra@grupoditech.es",estado:"Aplica"},
+  {empresa:"YES CONTACT & BPO S.A.S.",rh:"Heidy Mora",ini:"2026-03-18",fin:"2026-04-30",cierre:"2026-04-30",dir:"Cl 124 45-15",tel:"3046687878",correo:"RECURSOS@YESBPO.CO",estado:"Aplica"}
+];
+
+const PALETTES=[
+  ["#FBEAF0","#D4537E"],["#EEEDFE","#7F77DD"],["#E1F5EE","#1D9E75"],
+  ["#FAEEDA","#BA7517"],["#FAECE7","#993C1D"],["#E6F1FB","#185FA5"],
+  ["#EAF3DE","#3B6D11"],["#F4C0D1","#72243E"]
+];
+const today=new Date();today.setHours(0,0,0,0);
+const in30=new Date(today);in30.setDate(in30.getDate()+30);
+
+let sf=null,sd=1,qfilt='all',pg=1;
+const PP=10;
+
+function dc(fin){const d=new Date(fin);if(d<today)return 'exp';if(d<=in30)return 'soon';return '';}
+function ini(n){return n.replace(/[^\p{L}\s]/gu,'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('')||'??';}
+function pal(s){const h=[...s].reduce((a,c)=>a+c.charCodeAt(0),0);return PALETTES[h%PALETTES.length];}
+function fmt(s){if(!s||s==='—') return '—';const[y,m,d]=s.split('-');return `${d}/${m}/${y.slice(2)}`;}
+
+function getF(){
+  const q=document.getElementById('srch').value.toLowerCase();
+  const es=document.getElementById('fest').value;
+  return D.filter(r=>{
+    const mq=!q||[r.empresa,r.rh,r.correo,r.tel].join(' ').toLowerCase().includes(q);
+    const me=!es||r.estado===es;
+    const fd=new Date(r.fin);
+    const mq2=qfilt==='all'||
+      (qfilt==='soon'&&fd>=today&&fd<=in30)||
+      (qfilt==='exp'&&fd<today);
+    return mq&&me&&mq2;
+  }).sort((a,b)=>{
+    if(!sf)return 0;
+    return a[sf].localeCompare(b[sf])*sd;
+  });
+}
+
+function renderStats(){
+  const aplica=D.filter(r=>r.estado==='Aplica').length;
+  const na=D.filter(r=>r.estado==='NA').length;
+  const soon=D.filter(r=>{const d=new Date(r.fin);return d>=today&&d<=in30;}).length;
+  const exp=D.filter(r=>new Date(r.fin)<today).length;
+  const pct=v=>Math.round(v/D.length*100);
+
+  const cards=[
+    {label:'Total empresas',val:D.length,sub:'en seguimiento',color:'linear-gradient(90deg,#c45c8a,#8b6fd4)',r:pct(D.length),rc:'#D4537E'},
+    {label:'Aplica',val:aplica,sub:`${pct(aplica)}% del total`,color:'linear-gradient(90deg,#5dc4b8,#1D9E75)',r:pct(aplica),rc:'#1D9E75'},
+    {label:'Vencen pronto',val:soon,sub:'próximos 30 días',color:'linear-gradient(90deg,#FAC775,#BA7517)',r:pct(soon),rc:'#BA7517'},
+    {label:'Vencidas',val:exp,sub:'requieren atención',color:'linear-gradient(90deg,#F09595,#E24B4A)',r:pct(exp),rc:'#E24B4A'},
+  ];
+  const cont=D.length;
+  document.getElementById('stats-row').innerHTML=cards.map(c=>{
+    const r=c.r,rc=c.rc;
+    const dash=44*Math.PI,used=dash*(r/100),gap=dash-used;
+    return `<div class="stat">
+      <div class="stat-accent" style="background:${c.color}"></div>
+      <div class="stat-label">${c.label}</div>
+      <div class="stat-num" style="color:${rc}">${c.val}</div>
+      <div class="stat-sub">${c.sub}</div>
+      <div class="stat-ring">
+        <svg class="ring-svg" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="14" fill="none" stroke="#f0eaf5" stroke-width="4"/>
+          <circle cx="24" cy="24" r="14" fill="none" stroke="${rc}" stroke-width="4"
+            stroke-dasharray="${used.toFixed(1)} ${gap.toFixed(1)}"
+            stroke-linecap="round" transform="rotate(-90 24 24)"/>
+          <text x="24" y="27" text-anchor="middle" font-size="9" fill="${rc}" font-weight="500">${r}%</text>
+        </svg>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCharts(){
+  const months=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const byMonth=Array(12).fill(0);
+  D.forEach(r=>{const m=new Date(r.fin).getMonth();byMonth[m]++;});
+  const maxM=Math.max(...byMonth)||1;
+  const colors=['#D4537E','#c45c8a','#8b6fd4','#7F77DD','#5dc4b8','#1D9E75','#FAC775','#BA7517','#D4537E','#8b6fd4','#5dc4b8','#D4537E'];
+
+  const aplica=D.filter(r=>r.estado==='Aplica').length;
+  const na=D.length-aplica;
+  const pA=Math.round(aplica/D.length*100);
+
+  const byDir=D.reduce((acc,r)=>{
+    const m=new Date(r.ini).getMonth();
+    acc[m]=(acc[m]||0)+1;return acc;
+  },{});
+  const byDirArr=Object.entries(byDir).map(([m,v])=>({m:months[m],v}));
+
+  document.getElementById('charts-row').innerHTML=`
+    <div class="chart-card">
+      <div class="chart-label">Cierres por mes</div>
+      <div class="chart-value" style="color:#D4537E">${D.length} empresas</div>
+      <div class="mini-bars">
+        ${byMonth.map((v,i)=>`<div class="mini-bar" title="${months[i]}: ${v}" style="height:${Math.max(4,Math.round(v/maxM*36))}px;background:${colors[i]};opacity:${v>0?1:0.2}"></div>`).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;">
+        ${['E','F','M','A','M','J','J','A','S','O','N','D'].map(m=>`<span style="font-size:9px;color:#b8a8b5;flex:1;text-align:center">${m}</span>`).join('')}
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-label">Distribución estado</div>
+      <div class="chart-value" style="color:#7F77DD">${pA}% aplica</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:8px;">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="24" fill="none" stroke="#EEEDFE" stroke-width="10"/>
+          <circle cx="32" cy="32" r="24" fill="none" stroke="#7F77DD" stroke-width="10"
+            stroke-dasharray="${(Math.PI*48*pA/100).toFixed(1)} ${(Math.PI*48*(1-pA/100)).toFixed(1)}"
+            stroke-linecap="round" transform="rotate(-90 32 32)"/>
+          <circle cx="32" cy="32" r="24" fill="none" stroke="#1D9E75" stroke-width="10"
+            stroke-dasharray="${(Math.PI*48*(1-pA/100)).toFixed(1)} ${(Math.PI*48*pA/100).toFixed(1)}"
+            stroke-dashoffset="${-(Math.PI*48*pA/100).toFixed(1)}"
+            stroke-linecap="round" transform="rotate(-90 32 32)"/>
+        </svg>
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <div style="width:10px;height:10px;border-radius:50%;background:#7F77DD"></div>
+            <span style="font-size:12px;color:#7a6878">Aplica (${aplica})</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="width:10px;height:10px;border-radius:50%;background:#1D9E75"></div>
+            <span style="font-size:12px;color:#7a6878">N/A (${na})</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-label">Progreso de vigencias</div>
+      <div class="chart-value" style="color:#1D9E75">${Math.round(aplica/D.length*100)}% activas</div>
+      ${[
+        {l:'Aplica',v:aplica,t:D.length,c:'#D4537E'},
+        {l:'Vigentes hoy',v:D.filter(r=>new Date(r.fin)>=today).length,t:D.length,c:'#7F77DD'},
+        {l:'Por vencer',v:D.filter(r=>{const d=new Date(r.fin);return d>=today&&d<=in30;}).length,t:D.length,c:'#BA7517'},
+      ].map(x=>`
+        <div class="progress-wrap">
+          <div class="progress-label" style="margin-bottom:4px;"><span style="font-size:11px;color:#7a6878">${x.l}</span><span style="font-size:11px;font-weight:500;color:${x.c}">${x.v}</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:${Math.round(x.v/x.t*100)}%;background:${x.c}"></div></div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderTable(){
+  const f=getF();
+  const pages=Math.max(1,Math.ceil(f.length/PP));
+  if(pg>pages)pg=pages;
+  const sl=f.slice((pg-1)*PP,pg*PP);
+  document.getElementById('empt').style.display=sl.length?'none':'block';
+  const tb=document.getElementById('tbody');
+  tb.innerHTML='';
+  sl.forEach(r=>{
+    const [bg,fg]=pal(r.empresa);
+    const d=dc(r.fin);
+    const dcCls=d==='exp'?'dc danger':d==='soon'?'dc warn':'dc';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><div class="ec">
+        <div class="av" style="background:${bg};color:${fg}">${ini(r.empresa)}</div>
+        <div><div class="en">${r.empresa}</div><div class="er">${r.rh}</div></div>
+      </div></td>
+      <td><span class="dc">${fmt(r.ini)}</span></td>
+      <td><span class="${dcCls}">${fmt(r.fin)}</span></td>
+      <td><span class="pill ${r.estado==='Aplica'?'p-aplica':'p-na'}">${r.estado}</span></td>
+      <td><a class="ml" href="mailto:${r.correo}">${r.correo!=='—'?r.correo:'—'}</a></td>
+      <td><span class="ph">${r.tel}</span></td>`;
+    tr.onclick=()=>op(r);
+    tb.appendChild(tr);
+  });
+  renderPag(f.length,pages);
+}
+
+function renderPag(total,pages){
+  document.getElementById('pinfo').textContent=`Mostrando ${Math.min((pg-1)*PP+1,total)}–${Math.min(pg*PP,total)} de ${total}`;
+  const c=document.getElementById('pbtns');c.innerHTML='';
+  const prev=document.createElement('button');prev.className='pb';prev.textContent='←';prev.disabled=pg<=1;prev.onclick=()=>{pg--;renderTable();};c.appendChild(prev);
+  for(let p=1;p<=pages;p++){const b=document.createElement('button');b.className='pb'+(p===pg?' on':'');b.textContent=p;const pp=p;b.onclick=()=>{pg=pp;renderTable();};c.appendChild(b);}
+  const next=document.createElement('button');next.className='pb';next.textContent='→';next.disabled=pg>=pages;next.onclick=()=>{pg++;renderTable();};c.appendChild(next);
+}
+
+function srt(f){
+  if(sf===f)sd*=-1;else{sf=f;sd=1;}
+  document.querySelectorAll('th span[id]').forEach(s=>s.textContent='');
+  document.getElementById('s-'+f).textContent=sd>0?' ↑':' ↓';
+  pg=1;renderTable();
+}
+
+function qf(f,el){
+  qfilt=f;pg=1;
+  document.querySelectorAll('.pill-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderTable();
+}
+
+function op(r){
+  const [bg,fg]=pal(r.empresa);
+  const d=dc(r.fin);
+  const dcLabel=d==='exp'?'Vencida':d==='soon'?'Próxima a vencer':'Vigente';
+  const dcColor=d==='exp'?'#E24B4A':d==='soon'?'#BA7517':'#1D9E75';
+  document.getElementById('pcontent').innerHTML=`
+    <div class="pav" style="background:${bg};color:${fg}">${ini(r.empresa)}</div>
+    <h2>${r.empresa}</h2>
+    <div class="prh">${r.rh!=='—'?'RH: '+r.rh:''}</div>
+    <div class="ps-title">Fechas</div>
+    <div class="pr"><span class="pk">Inicio</span><span class="pv">${fmt(r.ini)}</span></div>
+    <div class="pr"><span class="pk">Fin contrato</span><span class="pv" style="color:${dcColor}">${fmt(r.fin)}</span></div>
+    <div class="pr"><span class="pk">Cierre máx.</span><span class="pv">${fmt(r.cierre)}</span></div>
+    <div class="pr"><span class="pk">Estado vigencia</span><span class="pv" style="color:${dcColor}">${dcLabel}</span></div>
+    <div class="ps-title">Contacto</div>
+    <div class="pr"><span class="pk">Correo</span><span class="pv"><a class="ml" href="mailto:${r.correo}">${r.correo}</a></span></div>
+    <div class="pr"><span class="pk">Teléfono</span><span class="pv">${r.tel}</span></div>
+    <div class="pr"><span class="pk">Dirección</span><span class="pv">${r.dir}</span></div>
+    <div class="ps-title">Clasificación</div>
+    <div class="pr"><span class="pk">Estado VC</span><span class="pill ${r.estado==='Aplica'?'p-aplica':'p-na'}">${r.estado}</span></div>`;
+  document.getElementById('pan').classList.add('open');
+  document.getElementById('ov').classList.add('show');
+}
+function cp(){document.getElementById('pan').classList.remove('open');document.getElementById('ov').classList.remove('show');}
+
+document.getElementById('srch').addEventListener('input',()=>{pg=1;renderTable();});
+document.getElementById('fest').addEventListener('change',()=>{pg=1;renderTable();});
+
+renderStats();renderCharts();renderTable();
+</script>
+</body>
+</html>
